@@ -1,0 +1,195 @@
+
+
+```
+[BƯỚC 1: Kéo mới nhất] ──► [BƯỚC 2: Sửa file] ──► [BƯỚC 3: Đóng gói & Ghi chú] ──► [BƯỚC 4: Đẩy lên mây]
+     git pull origin main                               git add . & commit             git push origin main
+```
+
+1. **Bước 1 (Trước khi làm): Kéo dữ liệu mới về máy:**
+   ```bash
+   git pull origin main
+   ```
+2. **Bước 2: Kiểm tra trạng thái các file vừa sửa:**
+   ```bash
+   git status
+   ```
+3. **Bước 3: Đóng file và ghi chú công việc (Commit):**
+   ```bash
+   git add .
+   git commit -m "tiền_tố: nội dung ngắn gọn công việc đã làm"
+   ```
+   * *Quy ước tiền tố commit:*
+     * `hw: ...` $\to$ Phần cứng, KiCad, schematic, PCB (Vĩ)
+     * `fw: ...` $\to$ Code RP2040, thuật toán bù nhiệt (Khải)
+     * `mech: ...` $\to$ Thiết kế 3D, scintillator, quang học (Đào)
+     * `sim: ...` $\to$ Code mô phỏng MATLAB, Python (Đào / Khải)
+     * `docs: ...` $\to$ Viết bài báo, thuyết minh Euréka (Cả nhóm)
+4. **Bước 4: Đẩy lên GitHub cho cả nhóm xem:**
+   ```bash
+   git push origin main
+   ```
+
+---
+
+### PHẦN 3: QUẢN LÝ PHIÊN BẢN 
+*Chỉ giữ 1 file và dùng lịch sử Git)*
+
+* **Xem lại lịch sử các lần lưu (Checkpoints):**
+  ```bash
+  git log --oneline -n 10
+  ```
+  *(Hiện danh sách 10 commit gần nhất kèm mã băm 7 ký tự, ví dụ: `a1b2c3d`)*.
+* **Quay ngược khôi phục 1 file:**
+  ```bash
+  git checkout a1b2c3d -- ten_file.txt
+  ```
+* **Hủy toàn bộ chỉnh sửa chưa commit (quay về trạng thái gần nhất):**
+  ```bash
+  git restore .
+  ```
+* **Đóng cột mốc**
+  ```bash
+  # Tạo mốc
+  git tag -a v1.0-nop-eureka -m "Bản cuối"
+  # Đẩy mốc lên GitHub
+  git push origin v1.0-nop-eureka
+  # Quay lại xem đúng phiên bản mốc đó bất cứ lúc nào
+  git checkout v1.0-nop-eureka
+  ```
+
+---
+
+### PHẦN 4: PHÂN NHÁNH THỬ NGHIỆM (BRANCHING)
+#### Quy trình thử nghiệm:
+1. **Tạo và nhảy sang nhánh thử nghiệm mới:**
+   ```bash
+   git switch -c test-mach-peak-detector
+   # (Hoặc lệnh cũ: git checkout -b test-mach-peak-detector)
+   ```
+2. **Sửa file, thử nghiệm và commit bình thường trên nhánh này:**
+   ```bash
+   git add .
+   git commit -m "hw: thử nghiệm đổi giá trị tụ lưu đỉnh sang 100pF"
+   ```
+
+#### Khi có kết quả:
+* **KỊCH BẢN A: Thử nghiệm THẤT BẠI $\to$ Xóa bỏ:**
+  ```bash
+  # Bước 1: Nhảy về nhánh chính
+  git switch main
+  # Bước 2: Xóa sổ nhánh thử nghiệm (tham số -D là xóa cưỡng bức)
+  git branch -D test-mach-peak-detector
+  ```
+  *(Toàn bộ file thử nghiệm lỗi biến mất, nhánh chính giữ nguyên $100\%$)*.
+
+* **KỊCH BẢN B: Thử nghiệm THÀNH CÔNG $\to$ Gộp vào bản chính thức (Merge):**
+  ```bash
+  # Bước 1: Nhảy về nhánh chính
+  git switch main
+  # Bước 2: Gộp kết quả vào main
+  git merge test-mach-peak-detector
+  # Bước 3: Xóa nhánh phụ đã gộp cho gọn
+  git branch -d test-mach-peak-detector
+  # Bước 4: Đẩy lên GitHub
+  git push origin main
+  ```
+
+---
+
+### PHẦN 5: NÂNG CAO – MỞ 2 FOLDER SONG SONG (`git worktree`)
+*(Khi muốn mở 2 cửa sổ chạy 2 thí nghiệm cùng lúc trên 2 thư mục vật lý riêng mà không cần clone lại repo)*
+
+* **Tạo một thư mục vật lý mới song song liên kết với nhánh thử nghiệm:**
+  ```bash
+  git worktree add ../CosmicChip-Test test-mach-moi
+  ```
+* **Xong việc, xóa bỏ thư mục thí nghiệm:**
+  ```bash
+  git worktree remove ../CosmicChip-Test
+  ```
+
+---
+
+### PHẦN 6: XỬ LÝ XUNG ĐỘT (MERGE CONFLICTS)
+*(2 người cùng sửa chung 1 dòng trong cùng 1 file và cùng đẩy lên)*
+
+1. Khi gõ `git pull origin main` bị báo lỗi đỏ: `CONFLICT (content)...`
+2. Mở file bị lỗi bằng **VS Code**, bạn sẽ thấy đoạn so sánh:
+   ```text
+   <<<<<<< HEAD (Phần của bạn)
+   V_threshold = 4.0; // mV
+   =======
+   V_threshold = 5.0; // Đồng đội vừa đổi
+   >>>>>>> a1b2c3d...
+   ```
+3. Bấm vào chữ **Accept Current Change** (giữ phần của bạn) hoặc **Accept Incoming Change** (lấy phần của bạn bè) hoặc sửa lại thành giá trị đúng nhất.
+4. Lưu file lại và chạy tiếp:
+   ```bash
+   git add .
+   git commit -m "fix: giải quyết xung đột ngưỡng trigger"
+   git push origin main
+   ```
+
+---
+
+### PHẦN 7: BẢNG ĐỐI CHIẾU THAO TÁC (DÙNG LỆNH vs. DÙNG CHUỘT TRÊN WEB)
+
+Nếu không muốn mở Git Bash mà muốn làm hoàn toàn trên trình duyệt:
+
+| Thao tác | Cách gõ lệnh Git | Cách làm trên Web GitHub |
+| :--- | :--- | :--- |
+| **Mở bộ soạn thảo nhanh** | Mở VS Code trên máy tính | **Bấm phím dấu chấm `.`** ngay trên trang web repo |
+| **Tạo thư mục con** | `mkdir Hardware` | Bấm *Add file $\to$ Create new file*, gõ: `Hardware/README.md` |
+| **Upload file / Đẩy code**| `git add .` + `git commit` + `push` | Bấm *Add file $\to$ Upload files* $\to$ Kéo thả file $\to$ *Commit changes* |
+| **Tạo nhánh mới** | `git switch -c <tên-nhánh>` | Bấm nút **`main`** góc trái $\to$ Gõ tên nhánh mới $\to$ *Create branch* |
+| **Xóa nhánh thử nghiệm**| `git branch -D <tên-nhánh>` | Vào tab **Branches** $\to$ Bấm icon **Thùng rác** |
+| **Gộp nhánh (Merge)** | `git merge <tên-nhánh>` | Vào tab **Pull requests** $\to$ *New pull request* $\to$ *Merge* |
+| **Đóng mốc phiên bản** | `git tag -a v1.0` | Cột phải bấm **Releases** $\to$ *Draft a new release* $\to$ *Publish* |
+
+---
+
+### PHẦN 8: KỸ THUẬT XỬ LÝ VÀ XEM DỮ LIỆU NẶNG (LARGE DATASETS)
+
+GitHub giới hạn file $< 25 - 100\,\text{MB}$:
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ MÔ HÌNH LƯU TRỮ DỮ LIỆU:                                      │
+│                                                                                        │
+│ 1. Trực tiếp trên Git: Chỉ lưu file mẫu "sample_data_1000_lines.txt" (<1 MB).          │
+│    (Mục đích: Người xem/giám khảo bấm vào là xem được cấu trúc bảng cột ngay trong 0.1s)│
+│                                                                                        │
+│ 2. Mục GitHub Releases: Nén file dữ liệu 7 ngày (.zip) nặng 100 MB - 2 GB.             │
+│    (Mục đích: Lưu trữ phiên bản sản phẩm và dữ liệu lớn kèm mã nguồn)                  │
+│     │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### PHẦN 9: FILE BỘ LỌC RÁC BẮT BUỘC (`.gitignore`)
+Tạo một file đặt tên là `.gitignore` ở thư mục gốc của repo để Git tự động bỏ qua các file tạm thời, tránh làm rác và phình to dung lượng repo:
+
+```text
+# Bỏ qua file rác của KiCad
+*.kicad_prl
+*.bak
+*-backups/
+_autosave-*
+
+# Bỏ qua file tạm của MATLAB
+*.asv
+*.m~
+slprj/
+
+# Bỏ qua file rác hệ điều hành
+Thumbs.db
+.DS_Store
+
+# Bỏ qua file tạm khi biên dịch LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+```
