@@ -1,0 +1,611 @@
+%% Test Roi luong tu
+clc; clear; close all;
+N_pairs = 10000; % So cap photon roi duoc do
+theta_A = 0;     % Alice co dinh may do o 0 rad
+beta_deg = linspace(0, 180, 50); % Bob xoay may do tu 0 den 180 do
+beta_rad = deg2rad(beta_deg);
+
+E_quantum_sim = zeros(size(beta_rad));
+E_classical_limit = 1 - 2*beta_rad/pi; % Gioi han toi da cua co hoc co dien
+
+for i = 1:length(beta_rad)
+    theta_B = beta_rad(i);
+    delta_theta = theta_A - theta_B;
+
+    % Xac suat luong tu do duoc 2 spin dong thuan (+1,+1 hoac -1,-1)
+    P_same = cos(delta_theta)^2; 
+
+    % Monte Carlo tao cac phep do thuc te
+    measurements = rand(N_pairs, 1) < P_same; % 1: cung chieu (+1), 0: trai chieu (-1)
+    % Gia tri tuong quan thuc nghiem E = (N_same - N_diff) / N_total
+    E_quantum_sim(i) = (sum(measurements) - sum(~measurements)) / N_pairs;
+end
+
+% Du doan ly thuyet co hoc luong tu
+E_theory = cos(2 * (theta_A - beta_rad));
+
+figure('Color', 'w', 'Position', [100, 100, 750, 500]);
+plot(beta_deg, E_theory, 'b-', 'LineWidth', 2.5, 'DisplayName', 'Ly thuyet Luong tu: cos(2\Delta\theta)');
+hold on;
+plot(beta_deg, E_quantum_sim, 'ro', 'MarkerSize', 5, 'DisplayName', 'Mo phong Monte Carlo (N=10^4)');
+plot(beta_deg, E_classical_limit, 'k--', 'LineWidth', 1.5, 'DisplayName', 'Gioi han Co dien Bell (Local Realism)');
+plot(beta_deg, -E_classical_limit, 'k--', 'LineWidth', 1.5, 'HandleVisibility', 'off');
+
+grid on; ylim([-1.2 1.2]);
+title('Kiem chung Bat dang thuc Bell: Vi pham gioi han co dien do Roi luong tu', 'FontSize', 12);
+xlabel('Goc may do cua Bob \beta (do)'); ylabel('He so tuong quan E(\alpha, \beta)');
+legend('Location', 'southwest');
+
+
+%% MO PHONG PHAN BO LANDAO / MOYAL (IONIZATION ENERGY LOSS)
+clc; clear; close all;
+N_events = 50000;
+xi = 0.05;      % Tham so do rong mat mat nang luong (MeV)
+Delta_mpv = 1.2; % Gia tri mat mat nang luong co xac suat cao nhat MPV (MeV)
+
+% Tao bien ngau nhien phan bo Moyal (Xap xi rat sat cua phan bo Landau)
+% Phuong phap lay mau: Chuyen doi tu phan bo chuan
+u = randn(N_events, 1);
+lambda = -log(u.^2 + 1e-12) + randn(N_events, 1)*0.5; % Phat sinh duoi dai Landau
+Delta_E = Delta_mpv + xi * lambda;
+Delta_E = Delta_E(Delta_E > 0 & Delta_E < 8); % Loai bo gia tri am vat ly
+
+figure('Color', 'w', 'Position', [150, 100, 800, 500]);
+h = histogram(Delta_E, 120, 'Normalization', 'pdf', 'FaceColor', [0.2 0.6 0.9], ...
+    'EdgeColor', 'none', 'DisplayName', 'Monte Carlo dE/dx (Landau Fluctuation)');
+hold on;
+
+% Ve duong cong ly thuyet Moyal
+dE_axis = linspace(0.5, 8, 300);
+lambda_axis = (dE_axis - Delta_mpv) / xi;
+moyal_pdf = (1 / (sqrt(2*pi) * xi)) * exp(-0.5 * (lambda_axis + exp(-lambda_axis)));
+plot(dE_axis, moyal_pdf, 'r-', 'LineWidth', 2.5, 'DisplayName', 'Ham giai tich Moyal/Landau Fit');
+
+% Danh dau MPV vs Mean
+xline(Delta_mpv, 'k--', 'LineWidth', 2, 'DisplayName', sprintf('MPV = %.2f MeV', Delta_mpv));
+xline(mean(Delta_E), 'm-.', 'LineWidth', 2, 'DisplayName', sprintf('Mean = %.2f MeV (Keo dai boi duoi Landau)', mean(Delta_E)));
+
+grid on;
+title('Phan bo mat nang luong ion hoa dE/dx trong detector mong', 'FontSize', 12);
+xlabel('Nang luong truyen vao \Delta E (MeV)'); ylabel('Mat do xac suat (PDF)');
+legend('Location', 'northeast');
+
+% KHỐI 2: 3D RAY TRACING QUANG HOC NHAP NHAY (SCINTILLATOR & SiPM)
+clc; clear; close all;
+
+L = 20; W = 4; H = 1; % Kich thuoc thanh: Dai 20cm, Rong 4cm, Cao 1cm
+n_scint = 1.58;       % Chiet suat nhua nhap nhay
+theta_crit = asin(1 / n_scint); % Goc phan xa toan phan (TIR)
+
+N_photons = 80;
+x0 = 5; y0 = 0; z0 = 0; % Vi tri hat ban qua tao photon phat sang
+
+figure('Color', 'k', 'Position', [100, 80, 950, 650]);
+hold on; axis equal; view(30, 25);
+xlim([-L/2 - 2, L/2 + 2]); ylim([-W/2 - 1, W/2 + 1]); zlim([-H/2 - 1, H/2 + 1]);
+set(gca, 'Color', 'k', 'XColor', 'w', 'YColor', 'w', 'ZColor', 'w');
+
+% 1. Ve thanh nhap nhay dang khoi hop 3D
+cube_x = [-L/2 L/2 L/2 -L/2 -L/2; -L/2 L/2 L/2 -L/2 -L/2];
+cube_y = [-W/2 -W/2 W/2 W/2 -W/2; -W/2 -W/2 W/2 W/2 -W/2];
+cube_z = [-H/2 -H/2 -H/2 -H/2 -H/2; H/2 H/2 H/2 H/2 H/2];
+% DONG 96 DA SUA: Truyen ma tran hop le vao mesh
+mesh(cube_x, cube_y, cube_z, 'FaceAlpha', 0.05, 'EdgeColor', [0.3 0.6 1]);
+
+% 2. Ve cam bien SiPM o dau thanh (+X)
+fill3([L/2 L/2 L/2 L/2], [-W/2 W/2 W/2 -W/2], [-H/2 -H/2 H/2 H/2], 'g', 'FaceAlpha', 0.7);
+text(L/2 + 0.5, 0, 0, 'SiPM Sensor', 'Color', 'g', 'FontWeight', 'bold');
+
+% Danh dau vi tri hat tuong tac ban dau
+plot3(x0, y0, z0, 'yo', 'MarkerFaceColor', 'y', 'MarkerSize', 6);
+
+% 3. Ban cac photon dang huong & Ray tracing
+collected = 0;
+for i = 1:N_photons
+    costheta = 2*rand - 1;
+    phi = 2*pi*rand;
+    sintheta = sqrt(1 - costheta^2);
+    dir = [sintheta*cos(phi), sintheta*sin(phi), costheta];
+
+    pos = [x0, y0, z0];
+    ray_pts = pos;
+    alive = true;
+    bounces = 0;
+
+    while alive && bounces < 20
+        dt = [];
+        if dir(1) > 0, dt(end+1) = (L/2 - pos(1))/dir(1); else, dt(end+1) = (-L/2 - pos(1))/dir(1); end
+        if dir(2) > 0, dt(end+1) = (W/2 - pos(2))/dir(2); else, dt(end+1) = (-W/2 - pos(2))/dir(2); end
+        if dir(3) > 0, dt(end+1) = (H/2 - pos(3))/dir(3); else, dt(end+1) = (-H/2 - pos(3))/dir(3); end
+
+        step = min(dt(dt > 1e-5));
+        pos = pos + step * dir;
+        ray_pts = [ray_pts; pos];
+
+        % Cham sensor SiPM o dau thanh
+        if abs(pos(1) - L/2) < 1e-4
+            collected = collected + 1;
+            plot3(ray_pts(:,1), ray_pts(:,2), ray_pts(:,3), 'g-', 'LineWidth', 1.2);
+            break;
+        end
+
+        % Phan xa toan phan o cac mat ben
+        if abs(pos(2) - W/2) < 1e-4 || abs(pos(2) + W/2) < 1e-4
+            dir(2) = -dir(2);
+        elseif abs(pos(3) - H/2) < 1e-4 || abs(pos(3) + H/2) < 1e-4
+            dir(3) = -dir(3);
+        else
+            break; % That thoat qua mat sau (-X)
+        end
+        bounces = bounces + 1;
+    end
+    if abs(pos(1) - L/2) >= 1e-4
+        plot3(ray_pts(:,1), ray_pts(:,2), ray_pts(:,3), 'r:', 'LineWidth', 0.5);
+    end
+end
+
+grid on;
+title(sprintf('Quang hoc Nhap nhay: Thu gom ve SiPM: %d/%d Photon (Hieu suat: %.1f%%)', ...
+    collected, N_photons, (collected/N_photons)*100), 'Color', 'w', 'FontSize', 12);
+%% Muon
+clc; clear; close all;
+
+% MO HINH THONG LUONG MUON VU TRU DANG MAT 3D (GAISSER FLUX)
+E = logspace(0, 3, 80);           % Nang luong Muon tu 1 GeV den 1000 GeV
+theta_deg = linspace(0, 85, 60);  % Goc thien dinh tu 0 do (dinh dau) den 85 do
+[E_grid, Theta_deg_grid] = meshgrid(E, theta_deg);
+theta_rad = deg2rad(Theta_deg_grid);
+
+% Hieu chinh do cong cua khi quyen (Curvature correction cos theta*)
+R_earth = 6371; % km
+d_atm = 32;     % km
+cos_theta_star = sqrt((E_grid.*cos(theta_rad)).^2 + 1e-4) ./ E_grid;
+
+% Cong thuc Gaisser cai tien (Guan / Tang modification)
+p1 = 1.1 * E_grid .* cos_theta_star / 115;
+p2 = 1.1 * E_grid .* cos_theta_star / 850;
+Flux = 0.14 * (E_grid).^(-2.7) .* (1./(1 + p1) + 0.054./(1 + p2));
+
+figure('Color', 'k', 'Position', [100, 100, 900, 650]);
+surf(log10(E_grid), Theta_deg_grid, log10(Flux));
+shading interp;
+colormap turbo; colorbar;
+c = colorbar; c.Color = 'w'; c.Label.String = 'log_{10}(Flux [cm^{-2} s^{-1} sr^{-1} GeV^{-1}])';
+
+set(gca, 'Color', 'k', 'XColor', 'w', 'YColor', 'w', 'ZColor', 'w');
+view(-45, 30); grid on;
+title('Thong luong Muon Vu tru Da tham so: I(E, \theta)', 'Color', 'w', 'FontSize', 13);
+xlabel('log_{10}(Nang luong Muon [GeV])', 'Color', 'w');
+ylabel('Goc thien dinh \theta (do)', 'Color', 'w');
+zlabel('log_{10}(Thong luong)', 'Color', 'w');
+
+%% Schrodinger Equation
+clc; clear; close all;
+
+% 1. THIET LAP KHONG GIAN VA GIAO DIEN DO HOA (SCI-FI DARK THEME)
+hFig = figure('Color', 'k', 'Position', [80, 50, 1100, 750], ...
+              'Name', 'Schrodinger Quantum Wave Packet - Full Lifecycle');
+ax = axes('Parent', hFig, 'Color', 'k');
+hold on; axis equal; axis off;
+view(38, 24);
+xlim([-17 17]); ylim([-12 12]); zlim([-6 10]);
+
+% Hien thi cong thuc toan bang trinh bien dich LaTeX chuan
+text(-16, 0, 9.2, '$$\mathbf{Nonrelativistic\ Schr\ddot{o}dinger\ Equation}$$', ...
+     'Interpreter', 'latex', 'Color', 'w', 'FontSize', 16);
+text(-16, 0, 7.6, '$$i\hbar \frac{\partial\Psi(x,t)}{\partial t} = -\frac{\hbar^2}{2m}\frac{\partial^2\Psi(x,t)}{\partial x^2} \quad \implies \quad \Psi(x,t) = \frac{A}{\sqrt{\sigma(t)}} e^{-\frac{(x - v_g t)^2}{2\sigma(t)^2}} e^{i(kx - \omega t)}$$', ...
+     'Interpreter', 'latex', 'Color', [0.75 0.9 1], 'FontSize', 12);
+
+% Bang thong so thoi gian thuc (HUD Metrics)
+hHUD_phase = text(-16, -11, 4.5, '', 'Color', 'y', 'FontSize', 11, 'FontWeight', 'bold');
+hHUD_time  = text(-16, -11, 3.2, '', 'Color', [0.4 1 0.4], 'FontSize', 10);
+hHUD_sigma = text(-16, -11, 2.0, '', 'Color', [0.3 0.8 1], 'FontSize', 10);
+text(-16, 10, -5, '\bullet CERN Theoretical Physics Simulation', 'Color', [0.6 0.6 0.6], 'FontSize', 9);
+
+% 2. KHOI TAO LUOI KHONG GIAN VA TOA DO
+L = 16;
+Nx = 400;
+x = linspace(-L, L, Nx);
+[X_grid, Y_grid] = meshgrid(linspace(-L, L, 90), linspace(-11, 11, 70));
+
+z_floor = -1.5; % Do cao mat luoi chan khong ben duoi
+
+% Hai truc laser phat quang (Do = Truc truyen song, Xanh = Truc pha)
+plot3([-L L], [0 0], [z_floor z_floor], 'Color', [1 0.2 0.2], 'LineWidth', 2.5); 
+plot3([0 0], [-11 11], [z_floor z_floor], 'Color', [0.2 0.5 1], 'LineWidth', 2.5);
+
+% Mat luoi khong gian ben duoi
+hGrid = mesh(ax, X_grid, Y_grid, z_floor*ones(size(X_grid)), ...
+             'EdgeColor', [0.3 0.35 0.45], 'FaceColor', 'none', 'LineWidth', 0.6);
+
+% Ong bao bien do trong suot (Envelope Ribs / Tube)
+n_angles = 28;
+theta_tube = linspace(0, 2*pi, n_angles);
+[Theta_mesh, ~] = meshgrid(theta_tube, x);
+hTube = surf(ax, zeros(size(Theta_mesh)), zeros(size(Theta_mesh)), zeros(size(Theta_mesh)), ...
+             'FaceColor', [0.1 0.45 0.95], 'EdgeColor', [0.2 0.65 1], ...
+             'FaceAlpha', 0.14, 'EdgeAlpha', 0.22);
+
+% Duong xoan oc 3D cua ham song phuc (Helix Corkscrew)
+hHelix = plot3(ax, x, zeros(size(x)), zeros(size(x)), ...
+               'Color', [0.3 0.9 1], 'LineWidth', 2.8);
+
+% Diem trong tam hat (Center of mass)
+hCenter = plot3(ax, 0, 0, 0, 'yo', 'MarkerFaceColor', 'y', 'MarkerSize', 7);
+
+% 3. THONG SO VAT LY LƯỢNG TỬ (QUANTUM WAVE PACKET DYNAMICS)
+k0 = 2.5;          % So song ban dau (Wave number)
+vg = 1.6;          % Van toc nhom (Group velocity: v_g = hbar*k/m)
+omega = 1.8;       % Tan so goc (Phase velocity)
+sigma0 = 2.0;      % Do rong ban dau cua goi song tai thoi diem t = 0
+A0 = 3.2;          % Bien do ban dau
+x_start = -11.5;   % Vi tri khoi sinh ben trai
+
+% Chu ky thoi gian: t chay tu 0 den T_max
+T_max = 14.0;
+dt = 0.045;
+t_sim = 0;
+
+% 4. VONG LAP MO PHONG TOAN BO TIEN TRINH THOI GIAN
+while ishandle(hFig)
+    t_sim = t_sim + dt;
+    if t_sim > T_max
+        t_sim = 0; % Tu dong tai sinh chu ky moi
+    end
+    
+    % --- CO HOC LUONG TU CHINH XAC ---
+    % 1. Vi tri tam goi song: x_c(t) = x_0 + v_g * t
+    x_center = x_start + vg * t_sim;
+    
+    % 2. Hien tuong Tan sac Luong tu (Quantum Dispersion): Goi song dan rong ra
+    % sigma(t) = sigma_0 * sqrt(1 + (t / tau)^2)
+    tau_disp = 4.5;
+    sigma_t = sigma0 * sqrt(1 + (t_sim / tau_disp)^2);
+    
+    % 3. Suy giam bien do de bao toan xac suat: A(t) = A_0 / sqrt(sigma(t)/sigma_0)
+    % Kem theo he so suy giam o hai dau bien (Window fade)
+    fade = sin(pi * (t_sim / T_max)); % = 0 o luc sinh ra va ket thuc, = 1 o giua
+    A_t = (A0 / sqrt(sigma_t / sigma0)) * max(0.1, fade);
+    
+    % 4. Bao song Gauss tai thoi diem t
+    envelope = A_t * exp(-((x - x_center).^2) / (2 * sigma_t^2));
+    
+    % 5. Pha song va ham song phuc
+    phase = k0 * (x - x_center) - omega * t_sim;
+    Re_psi = envelope .* cos(phase); % Truc dung (Phan thuc)
+    Im_psi = envelope .* sin(phase); % Truc ngang (Phan ao)
+    
+    % --- CAP NHAT DO HOA ---
+    % Cap nhat duong xoan oc 3D
+    set(hHelix, 'XData', x, 'YData', Im_psi, 'ZData', z_floor + Re_psi);
+    
+    % Cap nhat tam hat
+    set(hCenter, 'XData', x_center, 'YData', 0, 'ZData', z_floor + A_t);
+    
+    % Cap nhat ong bao trong suot 3D
+    env_tube = repmat(envelope', 1, n_angles);
+    Y_tube = env_tube .* cos(Theta_mesh);
+    Z_tube = z_floor + env_tube .* sin(Theta_mesh);
+    set(hTube, 'XData', repmat(x', 1, n_angles), 'YData', Y_tube, 'ZData', Z_tube);
+    
+    % Cap nhat luoi khong gian ben duoi (Uon luon theo vet di cua goi song)
+    env_2D = A_t * exp(-((X_grid - x_center).^2)/(2*sigma_t^2) - (Y_grid.^2)/18);
+    Z_grid_wave = z_floor + 0.7 * env_2D .* cos(k0 * (X_grid - x_center) - omega * t_sim);
+    set(hGrid, 'ZData', Z_grid_wave);
+    
+    % --- CAP NHAT THONG SO HUD THEO TIEN TRINH ---
+    if t_sim < 3.5
+        phase_str = 'GIAI DOAN 1: Khoi sinh goi song (Inception & Localization)';
+        hud_col = [1 0.8 0.2];
+    elseif t_sim < 10.5
+        phase_str = 'GIAI DOAN 2: Truyen lan & Tan sac luong tu (Quantum Dispersion)';
+        hud_col = [0.3 0.9 1];
+    else
+        phase_str = 'GIAI DOAN 3: Tieu tan vao chan khong & Hoi sinh (Dissolution)';
+        hud_col = [1 0.4 0.4];
+    end
+    
+    set(hHUD_phase, 'String', phase_str, 'Color', hud_col);
+    set(hHUD_time,  'String', sprintf('Thoi gian t = %.2f s | Vi tri tam <x> = %+.2f', t_sim, x_center));
+    set(hHUD_sigma, 'String', sprintf('Do rong goi song \\sigma(t) = %.2f | Bien do A(t) = %.2f', sigma_t, A_t));
+    
+    drawnow;
+    pause(0.015);
+end
+
+
+%% BOGOLIUBOV - GROSS-PITAEVSKII QUANTUM VORTEX DYNAMICS
+
+clc; clear; close all;
+
+% 1. THIET LAP LUOI KHONG GIAN VA THONG SO VAT LY
+N = 128;                       % Do phan giai luoi (128x128)
+L = 10;                        % Kich thuoc mien khong gian [-L, L]
+x = linspace(-L, L, N);
+y = linspace(-L, L, N);
+[X, Y] = meshgrid(x, y);
+dx = x(2) - x(1);
+dt = 0.015;                    % Buoc thoi gian
+
+% Khong gian xung luong Fourier (Momentum Space)
+kx = (pi/L) * [0:(N/2-1), -N/2:-1];
+ky = (pi/L) * [0:(N/2-1), -N/2:-1];
+[KX, KY] = meshgrid(kx, ky);
+K2 = KX.^2 + KY.^2;            % Toan tu Dong nang
+
+% The nang giu hat (Harmonic Optical Trap)
+omega_trap = 0.8;
+V_trap = 0.5 * omega_trap^2 * (X.^2 + Y.^2);
+
+% He so tuong tac phi tuyen day giua cac nguyen tu (Repulsive Interaction)
+g = 60.0;
+
+% 2. KHOI TAO TRANG THAI: CONDENSATE + 4 XOAY LUONG TU (QUADRUPOLE)
+% Nen Thomas-Fermi
+R_TF = 6.2;
+psi = sqrt(max(0, (1 - (X.^2 + Y.^2)/R_TF^2) * 1.5));
+
+% Cay 4 xoay luong tu (Vortices) doi xung o ban kinh r0
+r0 = 2.4;
+vortex_pos = [ r0,  0,  1;   % [x, y, charge +1]
+               0,  r0,  1;   % [x, y, charge +1]
+              -r0,  0,  1;   % [x, y, charge +1]
+               0, -r0,  1];  % [x, y, charge +1]
+
+xi = 0.45; % Do rong loi xoay (Healing length)
+for k = 1:size(vortex_pos, 1)
+    vx = vortex_pos(k, 1);
+    vy = vortex_pos(k, 2);
+    charge = vortex_pos(k, 3);
+    
+    dist = sqrt((X - vx).^2 + (Y - vy).^2);
+    % DA FIX: Doi ten bien thanh phi_v de khong de len ham goc angle() cua MATLAB
+    phi_v = atan2(Y - vy, X - vx); 
+    psi = psi .* (dist ./ sqrt(dist.^2 + xi^2)) .* exp(1i * charge * phi_v);
+end
+
+% Chuan hoa tong xac suat
+psi = psi / sqrt(sum(abs(psi(:)).^2) * dx^2);
+
+% 3. TOAN TU SPLIT-STEP FOURIER CAP 2 (STRANG SPLITTING)
+exp_T = exp(-1i * 0.5 * K2 * dt); % Toan tu dong nang trong Fourier domain
+
+% 4. THIET LAP GIAO DIEN DO HOA 3D & 2D DONG BO
+hFig = figure('Color', [0.05 0.05 0.08], 'Position', [60, 60, 1200, 650], ...
+              'Name', 'Frontier Quantum Physics: 2D Gross-Pitaevskii Vortices');
+
+% --- KHUNG NHIN 1: 3D DENSITY & QUANTUM PHASE ---
+ax1 = subplot(1, 2, 1, 'Parent', hFig);
+% Goi ham angle() goc he thong hoan toan binh thuong
+hSurf = surf(ax1, X, Y, abs(psi).^2, 'CData', angle(psi), 'EdgeColor', 'none');
+colormap(ax1, hsv); 
+if exist('clim', 'file') || exist('clim', 'builtin')
+    clim(ax1, [-pi, pi]);
+else
+    caxis(ax1, [-pi, pi]);
+end
+axis(ax1, [-L L -L L 0 0.12]); axis square;
+view(ax1, 35, 45); rotate3d on;
+set(ax1, 'Color', [0.05 0.05 0.08], 'XColor', [0.4 0.4 0.5], ...
+         'YColor', [0.4 0.4 0.5], 'ZColor', [0.4 0.4 0.5]);
+title(ax1, 'Mat Do Hat |\psi|^2 & 4 Loi Xoay (Chieu cao: Mat do, Mau: Pha \theta)', ...
+      'Color', 'w', 'FontSize', 11);
+lighting gouraud;
+light('Position', [10 10 20], 'Style', 'infinite');
+
+% --- KHUNG NHIN 2: 2D TOPOLOGICAL PHASE PORTRAIT ---
+ax2 = subplot(1, 2, 2, 'Parent', hFig);
+hPhase = imagesc(ax2, x, y, angle(psi));
+set(ax2, 'YDir', 'normal'); axis square;
+colormap(ax2, hsv); 
+if exist('clim', 'file') || exist('clim', 'builtin')
+    clim(ax2, [-pi, pi]);
+else
+    caxis(ax2, [-pi, pi]);
+end
+cb = colorbar(ax2, 'Location', 'eastoutside');
+cb.Color = 'w'; cb.Label.String = 'Pha Luong Tu \theta = arg(\psi) [rad]';
+set(ax2, 'Color', 'k', 'XColor', [0.4 0.4 0.5], 'YColor', [0.4 0.4 0.5]);
+title(ax2, 'Ban Do Pha To-Po: Tuan Hoan Goc \oint \nabla\theta\cdot dr = 2\pi', ...
+      'Color', 'w', 'FontSize', 11);
+
+% Text HUD theo doi bao toan nang luong & xac suat
+hHUD = annotation('textbox', [0.32, 0.02, 0.38, 0.06], 'Color', 'y', ...
+                  'EdgeColor', [0.3 0.3 0.4], 'BackgroundColor', [0 0 0 0.7], ...
+                  'HorizontalAlignment', 'center', 'FontSize', 10, 'FitBoxToText', 'on');
+
+% 5. VONG LAP MO PHONG TUAN HOAN LIEN TUC (REAL-TIME EVOLUTION)
+t = 0;
+while ishandle(hFig)
+    % Thuc hien 4 buoc tich phan GPE cho moi khung hinh de toc do muot ma
+    for step = 1:4
+        t = t + dt;
+        
+        % Buoc 1: The nang & Tuong tac phi tuyen (1/2 buoc thoi gian)
+        exp_V = exp(-1i * (V_trap + g * abs(psi).^2) * (0.5 * dt));
+        psi = exp_V .* psi;
+        
+        % Buoc 2: Dong nang trong khong gian song Fourier (1 buoc day du)
+        psi = ifft2(exp_T .* fft2(psi));
+        
+        % Buoc 3: The nang & Tuong tac phi tuyen (1/2 buoc thoi gian con lai)
+        psi = exp_V .* psi;
+        
+        % Bao toan tong xac suat (Unitary conservation)
+        norm_val = sum(abs(psi(:)).^2) * dx^2;
+        psi = psi / sqrt(norm_val);
+    end
+    
+    % Tinh toan bien do mat do va pha bang ham angle() he thong
+    density = abs(psi).^2;
+    phase_map = angle(psi);
+    
+    % Cap nhat do hoa thoi gian thuc
+    set(hSurf, 'ZData', density, 'CData', phase_map);
+    set(hPhase, 'CData', phase_map);
+    
+    set(hHUD, 'String', sprintf(['Thoi gian luong tu: t = %.2f s | Bao toan hat N = 1.0000\n' ...
+                                 'Trang thai: 4 Xoay dong chieu dang vu dieu tuan hoan quanh tam'], t));
+    drawnow limitrate; % Toi uu toc do hien thi 60 FPS
+end
+
+
+%% COSMICCHIP MULTI-STAGE DETECTOR SIMULATION IN MATLAB (BASE VERSION)
+% Phiên bản tối ưu: Không cần Toolbox, không tràn RAM, chạy dưới 1 giây.
+clear; clc; close all;
+rng(42); % Cố định seed ngẫu nhiên
+
+% 1. CẤU HÌNH THAM SỐ MÔI TRƯỜNG & VẬT LÝ TẠI VIỆT NAM
+T_env = 32.0;         % Nhiệt độ phòng thí nghiệm (°C)
+P_atm = 1009.0;       % Áp suất khí quyển thực tế (hPa)
+P_0 = 1013.25;        % Áp suất tiêu chuẩn (hPa)
+beta_P = -0.0013;     % Hệ số khí áp (-0.13%/hPa)
+Sim_Time = 3600;      % Thời gian mô phỏng: 1 giờ (3600 giây)
+
+% 2. THÔNG LƯỢNG HẠT MUON & BỨC XẠ NỀN (TẦNG 1)
+% Tốc độ Muon thực tế tại Việt Nam (~0.37 Hz) sau hiệu chỉnh khí áp
+R_muon_base = 0.38; 
+R_muon = R_muon_base * (1 + beta_P * (P_atm - P_0));
+
+% Bức xạ phóng xạ tự nhiên môi trường (Gamma/Radon xung quanh ~2.1 Hz)
+R_background = 2.12; 
+
+% Sinh số lượng sự kiện (Dùng xấp xỉ Gaussian cho Poisson khi lambda lớn)
+N_muons = max(0, round(R_muon * Sim_Time + sqrt(R_muon * Sim_Time) * randn()));
+N_bg    = max(0, round(R_background * Sim_Time + sqrt(R_background * Sim_Time) * randn()));
+
+% Thời điểm hạt tới (Uniformly distributed)
+t_muons = sort(Sim_Time * rand(N_muons, 1));
+t_bg    = sort(Sim_Time * rand(N_bg, 1));
+
+% 3. TƯƠNG TÁC NĂNG LƯỢNG & QUANG HỌC (TẦNG 2)
+% --- Với Hạt Muon: Phân bố Landau-Moyal (MIP bump ~20 mV) ---
+theta = acos(rand(N_muons, 1).^(1/3));      % Góc tới cos^2(theta)
+path_length = 1.0 ./ cos(theta);            % Bề dày quỹ đạo qua tấm 1cm (cm)
+
+mu_L = 20.0 * path_length;                  % Đỉnh Landau ~20 mV
+c_L = 4.5;                                  % Độ rộng tán xạ
+z_m = randn(N_muons, 1);
+V_muon_pulse = mu_L + c_L * (z_m - exp(-z_m)); 
+V_muon_pulse = max(0, V_muon_pulse);        % Không âm
+
+% --- Với Bức xạ nền môi trường: Phân rã tán xạ Compton (chủ yếu < 10 mV) ---
+% Phổ tán xạ Compton giảm theo hàm mũ
+V_bg_pulse = -log(rand(N_bg, 1)) * 3.5 + 2.0; 
+
+% 4. TỔNG HỢP VÀ LỌC QUA NGƯỠNG TRIGGER (TẦNG 3 & 4)
+% Nhãn: 1 = Muon thật, 0 = Bức xạ nền/Nhiễu
+All_Events = [ [t_muons, V_muon_pulse, ones(N_muons, 1)]; ...
+               [t_bg,    V_bg_pulse,   zeros(N_bg, 1)] ];
+All_Events = sortrows(All_Events, 1); % Sắp xếp theo dòng thời gian
+
+% Ngưỡng kích hoạt Trigger Threshold của CosmicWatch v3X (4.0 mV)
+V_threshold = 4.0; % mV
+Triggered = All_Events(All_Events(:, 2) >= V_threshold, :);
+
+% Mô phỏng Thời gian chết (Non-paralyzable Dead Time: 408 microseconds)
+tau_dead = 408e-6; 
+recorded_mask = false(size(Triggered, 1), 1);
+t_last = -inf;
+
+for i = 1:size(Triggered, 1)
+    if Triggered(i, 1) >= (t_last + tau_dead)
+        recorded_mask(i) = true;
+        t_last = Triggered(i, 1);
+    end
+end
+
+Final_Events = Triggered(recorded_mask, :);
+
+% 5. XUẤT KẾT QUẢ ĐỐI SOÁT VỚI THỰC NGHIỆM
+Total_Recorded = size(Final_Events, 1);
+Muon_Recorded  = sum(Final_Events(:, 3) == 1);
+BG_Recorded    = sum(Final_Events(:, 3) == 0);
+
+Measured_Rate = Total_Recorded / Sim_Time;
+Muon_Rate     = Muon_Recorded / Sim_Time;
+
+fprintf('================ KẾT QUẢ MÔ PHỎNG COSMICCHIP ================\n');
+fprintf('Nhiệt độ phòng: %.1f °C | Áp suất: %.1f hPa\n', T_env, P_atm);
+fprintf('Tổng tốc độ đếm ghi nhận (Trigger Rate): %.3f Hz (Chuẩn CW: ~2.5 Hz)\n', Measured_Rate);
+fprintf('Tốc độ đếm hạt Muon:                    %.3f Hz (~%.1f hạt/phút)\n', Muon_Rate, Muon_Rate*60);
+fprintf('Tỷ lệ Muon / Tổng số sự kiện (Single):  %.2f %%\n', (Muon_Recorded / Total_Recorded) * 100);
+
+% 6. VẼ PHỔ BIÊN ĐỘ XUNG (LANDAU-MOYAL SPECTRUM)
+figure('Name', 'CosmicChip Pulse Spectrum', 'Color', 'w', 'Position', [100, 100, 800, 500]);
+bins = linspace(0, 80, 80);
+
+h_bg = histogram(Final_Events(Final_Events(:,3)==0, 2), bins, ...
+    'FaceColor', [0.85 0.33 0.1], 'FaceAlpha', 0.6, 'EdgeColor', 'none');
+hold on;
+h_mu = histogram(Final_Events(Final_Events(:,3)==1, 2), bins, ...
+    'FaceColor', [0 0.45 0.74], 'FaceAlpha', 0.7, 'EdgeColor', 'none');
+
+% Đánh dấu ngưỡng Trigger và đỉnh MIP
+xline(V_threshold, '--r', 'LineWidth', 2, 'Label', 'Ngưỡng Trigger (4 mV)', 'LabelVerticalAlignment', 'top');
+xline(20.0, ':k', 'LineWidth', 1.5, 'Label', 'MIP Peak (~20 mV)');
+
+xlabel('Biên độ xung SiPM quy đổi (mV)', 'FontSize', 12, 'FontWeight', 'bold');
+ylabel('Số lượng sự kiện / bin', 'FontSize', 12, 'FontWeight', 'bold');
+title(sprintf('Phổ biên độ đỉnh xung CosmicChip (Simulated at T = %.1f°C, P = %.1f hPa)', T_env, P_atm), 'FontSize', 13);
+legend([h_mu, h_bg], {'Tia vũ trụ Muon (Landau Peak)', 'Bức xạ nền tự nhiên (Compton Tail)'}, 'FontSize', 11);
+grid on;
+set(gca, 'Box', 'on', 'LineWidth', 1.2);
+%% CẤU HÌNH THAM SỐ THỰC TẾ TẠI VIỆT NAM (VIETNAM LOCAL PARAMETERS)
+Location = 'HCMC'; % Chọn: 'HANOI', 'HCMC', hoặc 'DALAT'
+
+switch Location
+    case 'HANOI'
+        Geo_Lat = 21.03;          % Vĩ độ Bắc (độ)
+        Geo_Long = 105.85;        % Kinh độ Đông (độ)
+        Rc_cutoff = 15.6;         % Độ cứng cắt từ trường (GV)
+        Altitude = 10;            % Độ cao so với mực nước biển (m)
+        P_atm = 1010.5;           % Áp suất khí quyển trung bình (hPa)
+        T_env = 32.0;             % Nhiệt độ môi trường phòng lab (°C)
+
+    case 'HCMC'
+        Geo_Lat = 10.82;
+        Geo_Long = 106.63;
+        Rc_cutoff = 16.9;         % Gần xích đạo từ hơn -> Rc cao nhất
+        Altitude = 5;
+        P_atm = 1009.0;
+        T_env = 33.5;             % Môi trường miền Nam thường nóng hơn
+
+    case 'DALAT'
+        Geo_Lat = 11.94;
+        Geo_Long = 108.44;
+        Rc_cutoff = 16.5;
+        Altitude = 1500;          % Cao nguyên 1500m
+        P_atm = 852.0;            % Áp suất giảm mạnh theo độ cao
+        T_env = 20.0;             % Khí hậu ôn đới mát mẻ
+end
+
+% THÔNG LƯỢNG HẠT MUON ĐÃ HIỆU CHỈNH TẠI VIỆT NAM
+% 1. Thông lượng cơ bản hiệu chỉnh theo Vĩ độ địa từ (Rc cao làm giảm ~7% so với Mỹ/Âu)
+% Tấm nhựa 5x5 cm2 tại Mỹ ~ 0.40 Hz -> Tại VN mực nước biển ~ 0.372 Hz
+R_base_sea_level = 0.40 * (1 - 0.005 * (Rc_cutoff - 1.5)); 
+
+% 2. Hiệu chỉnh theo Độ cao (áp dụng mô hình tăng hàm mũ tới 3km)
+% Dựa trên thực nghiệm chuyến bay của Spencer Axani (Doc 2, Eq 2.3 & Sec 2.13)
+R_altitude_factor = exp(Altitude / 4500); 
+
+% 3. Hiệu chỉnh theo Khí áp địa phương
+beta_P = -0.0013; % -0.13 %/hPa
+R_muon_VN = R_base_sea_level * R_altitude_factor * (1 + beta_P * (P_atm - 1013.25));
+
+% ĐẶC TÍNH BÁN DẪN SiPM DƯỚI ĐIỀU KIỆN NHIỆT ĐỘ VIỆT NAM
+V_br_ref = 24.5;                 % Điện áp breakdown ở 25°C (V)
+temp_coeff_Vbr = 0.0215;         % 21.5 mV/°C
+V_br_actual = V_br_ref + temp_coeff_Vbr * (T_env - 25.0);
+
+% Nhiễu tối DCR bùng nổ theo nhiệt độ VN
+DCR_25C = 30000;                 % 30 kHz cơ sở ở 25°C
+DCR_actual = DCR_25C * 2^((T_env - 25.0) / 8.0); 
+
+fprintf('=== THÔNG SỐ VẬT LÝ KHỞI TẠO TẠI: %s ===\n', Location);
+fprintf('Độ cứng cắt từ trường (Rc): %.1f GV\n', Rc_cutoff);
+fprintf('Tốc độ Muon lý thuyết dự kiến: %.4f Hz (%.1f hạt/phút)\n', R_muon_VN, R_muon_VN*60);
+fprintf('Nhiệt độ: %.1f °C | DCR của SiPM: %.1f kHz (Tăng %.1f%% do nhiệt)\n', ...
+    T_env, DCR_actual/1e3, (DCR_actual/DCR_25C - 1)*100);
+fprintf('Điện áp đánh thủng V_br thực tế: %.3f V (Đã trôi +%.1f mV)\n', ...
+    V_br_actual, (V_br_actual - V_br_ref)*1e3);
