@@ -3,7 +3,7 @@
 > **Mục đích của file này**: Giúp mọi thành viên mới trong nhóm biết được mục tiêu dự án, cách tổ chức vault Obsidian, thứ tự đọc tài liệu, và flow làm việc từ nghiên cứu → thiết kế → thực nghiệm → phân tích → viết bài.
 
 ---
-
+TIMELINE: https://docs.google.com/spreadsheets/d/1c9MU6x74WD1nTF0OeYUb1gAWTHWhHnTWHWpshAr11y0/edit?usp=sharing
 ## 1. Dự án
 
 **Tên dự án (tạm thời):**  
@@ -65,14 +65,7 @@ Khi nhiệt độ thay đổi, breakdown voltage của SiPM thay đổi, làm d�
 | Documentation   | Obsidian vault, paper writing, slides, poster                  | TBD              |
 
 
----
-
-## 4. Cấu trúc vault Obsidian
-
-
----
-
-## 5. Hướng dẫn đọc
+## 4. Hướng dẫn đọc
 
 ### Bước 1: Đọc overview
 
