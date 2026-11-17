@@ -1,0 +1,7 @@
+* BAT54S - Dual Series Schottky Barrier Diode (SOT-23)
+* Thu tu chan theo CosmicWatch v3X: 1=A, 2=K, 3=COM
+.subckt BAT54S A K COM
+D1 A COM BAT54
+D2 COM K BAT54
+.model BAT54 D(Is=0.1u Rs=2.2 N=1 Cjo=12p M=0.3 Eg=0.69 Xti=2 Iave=300m Vpk=30)
+.ends BAT54S

@@ -1,0 +1,23 @@
+* Onsemi MicroFC-60035-SMT Thermal Behavioral Model
+* Thu tu chan: 1=ANODE 2=NC 3=CATHODE 4=GND
+.subckt SiPM_60035 ANODE NC CATHODE GND
+.param VBR_21C=24.7 DVBR_DT=0.0215 CD_TOTAL=3400p GAIN_2V5=3e6 IDARK_21C=618n
+.param N_PE=100 T_EVT=1m TAU_RISE=1n TAU_PULSE=30n
+
+* Dien ap qua nguong Vov muot tai Vbr(T) = 24.7 + 21.5mV*(T - 21)
+B_RAW RAW_OV GND V=V(CATHODE,ANODE) - (VBR_21C + DVBR_DT*(temp - 21))
+B_VOV VOV GND V=0.5*(V(RAW_OV,GND) + sqrt(V(RAW_OV,GND)*V(RAW_OV,GND) + 1e-6))
+
+* Dien dung 3400pF & Diode thuan (~0.5V)
+C_TERM CATHODE ANODE {CD_TOTAL}
+D_FWD ANODE CATHODE D_SIPM
+.model D_SIPM D(Is=1e-10 Rs=1 N=1.2)
+
+* Dong toi co ban tai 21C
+B_IDARK CATHODE ANODE I=IDARK_21C * (V(VOV,GND)/2.5)
+
+* Xung dong muon dung uramp() tranh tran ham exp() truoc thoi diem T_EVT
+B_PULSE CATHODE ANODE I=(N_PE*1.602e-19*GAIN_2V5*(V(VOV,GND)/2.5)/TAU_PULSE) * (1 - exp(-uramp(time-T_EVT)/TAU_RISE)) * exp(-uramp(time-T_EVT)/TAU_PULSE)
+
+R_NC NC GND 1G
+.ends SiPM_60035

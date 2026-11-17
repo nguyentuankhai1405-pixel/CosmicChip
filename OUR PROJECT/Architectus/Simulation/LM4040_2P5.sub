@@ -1,0 +1,16 @@
+* LM4040-2.5V Precision Micropower Shunt Voltage Reference
+* Thu tu chan theo CosmicWatch v3X (U7): 1=C (Cathode), 2=A (Anode), 3=NA
+.subckt LM4040_2P5 C A NA
+.param VNOM=2.500 ZR=0.3 TC_PPM=100
+
+* Dien ap chuan bien thien theo nhiet do (max 100ppm/C theo datasheet)
+B_VREF VZ A V=VNOM * (1 + (TC_PPM*1e-6)*(temp - 25))
+
+* Dan shunt khi V(C,A) > V(VZ,A) qua tro dong ZR=0.3 ohm
+D_SHUNT C VZ D_IDEAL
+D_REV A C D_SILICON
+.model D_IDEAL D(Ron={ZR} Roff=10Meg Vfwd=0)
+.model D_SILICON D(Is=1e-12 Rs=0.5 N=1)
+R_LEAK C A 10Meg
+R_NA NA A 1G
+.ends LM4040_2P5
