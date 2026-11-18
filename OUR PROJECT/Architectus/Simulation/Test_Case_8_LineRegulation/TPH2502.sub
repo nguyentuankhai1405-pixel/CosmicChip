@@ -1,0 +1,32 @@
+* 3PEAK TPH2502 Dual Rail-to-Rail Op-Amp (Cau truc chuan level2 LTspice)
+* Thu tu chan: 1=OUTA 2=-INA 3=+INA 4=V- 5=+INB 6=-INB 7=OUTB 8=V+
+.subckt TPH2502 OUTA INA_N INA_P VEE INB_P INB_N OUTB VCC
+X_CHA INA_P INA_N VCC VEE OUTA TPH2502_CH
+X_CHB INB_P INB_N VCC VEE OUTB TPH2502_CH
+.ends TPH2502
+
+.subckt TPH2502_CH INP INN VCC VEE OUT
+.param VOS_INIT=0 Avol=316228 GBW=120Meg Slew=180Meg Ilimit=0.16 Rail=0.02 Rout=100Meg
+.param Cout={Avol/GBW/6.2831853/Rout}
+
+I_Q VCC VEE 6.5m
+C_DIFF INP INN 2.7p
+C_CMP INP VEE 1p
+C_CMN INN VEE 1p
+I_BP INP VEE {limit(3p + (temp-27)*(147p/58), 3p, 300p)}
+I_BN INN VEE {limit(3p + (temp-27)*(147p/58), 3p, 300p)}
+
+A1 INN INP 0 0 0 0 X 0 OTA G={Avol/Rout} ref={VOS_INIT + 10u*(temp-25)} Iout={Slew*Cout} Cout={Cout} Vhigh=1e308 Vlow=-1e308
+R2 X VEE {2*Rout} noiseless
+R1 VCC X {2*Rout} noiseless
+S1 OUT VCC X OUT Q
+S2 VEE OUT OUT X Q
+.model Q SW(Ron=10 Roff=10Meg Vt=0 Vh=-0.1 Vser={Rail} ilimit={Ilimit} noiseless level=2 epsilon={Rail/10})
+C3 OUT VEE 1p
+C4 VCC OUT 1p
+B1 X 0 I=if(V(X,VCC)<0,0,({2*Slew*Cout}*V(X,VCC))**2)
+B2 0 X I=if(V(X,VEE)>0,0,({2*Slew*Cout}*V(VEE,X))**2)
+D1 OUT VCC X_D
+D2 VEE OUT X_D
+.model X_D D(Ron=0.1 epsilon=10 noiseless)
+.ends TPH2502_CH

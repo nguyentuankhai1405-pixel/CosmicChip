@@ -1,0 +1,34 @@
+* Mo hinh hanh vi MAX5026 (500kHz, 36V Boost Converter) theo Datasheet
+* Thu tu chan (SOT23-6): 1=PGND  2=GND  3=FB  4=SHDN  5=VCC  6=LX
+.subckt MAX5026 PGND GND FB SHDN VCC LX
+.param VREF_FB={mc(1.25, 0.03)}
+
+* 1. Logic khoi dong: UVLO > 2.65V va SHDN > 1.6V
+B_EN EN GND V=if((V(VCC,GND)>2.65)&(V(SHDN,GND)>1.6), 5, 0)
+
+* 2. Dong nuoi IC (350uA) va dong bias chan FB (110nA)
+B_ICC VCC GND I=if(V(EN,GND)>2.5, 350u, 0.01u)
+B_IFB FB GND I=if(V(EN,GND)>2.5, 110n, 0)
+
+* 3. Bo dao dong 500kHz (Ts = 2us); xung CLK rong 50ns dong vai tro chong gai nhieu bat khoa (LEB)
+V_CLK CLK GND PULSE(0 5 100n 2n 2n 50n 2u)
+V_MAXD MAXD GND PULSE(0 5 1.8u 2n 2n 200n 2u)
+
+* 4. Cam bien dong qua khoa LX + bo loc gai nhieu tụ diode
+V_SENSE SW_S PGND 0
+B_CS I_RAW GND V=I(V_SENSE)
+R_CS I_RAW CS_FILT 1k
+C_CS CS_FILT GND 30p
+
+* 5. Bo so sanh PWM va gioi han dong ILIM = (VCC/5)*260mA
+B_CLR CLR GND V=if((V(EN,GND)<2.5) | (V(MAXD,GND)>2.5) | (V(FB,GND)>={VREF_FB}) | ((V(CLK,GND)<2.5) & (V(CS_FILT,GND) >= limit(10*({VREF_FB}-V(FB,GND)), 0.002, 0.26*limit(V(VCC,GND),2.5,11)/5))), 5, 0)
+
+* 6. Flip-Flop dieu khien PWM (thoi gian tat 40ns theo datasheet)
+A_FF D_HI GND CLK GND CLR GND Q_DRV GND DFLOP Vhigh=5 Vlow=0 Ref=2.5 Td=5n Trise=10n Tfall=40n
+V_DHI D_HI GND 5
+
+* 7. Khoa DMOS noi 40V (Ron = 1.3 ohm)
+S_LX LX SW_S Q_DRV GND SW_DMOS
+.model SW_DMOS SW(Ron=1.3 Roff=100Meg Vt=2.5 Vh=-0.5)
+
+.ends MAX5026

@@ -1,0 +1,17 @@
+Version 4
+SymbolType BLOCK
+RECTANGLE Normal -32 -40 48 40
+WINDOW 0 8 -40 Bottom 2
+SYMATTR Prefix X
+SYMATTR Value LM4040_2P5
+SYMATTR ModelFile C:\Users\Truong_Tuan_Vi\CosmicChip\OUR PROJECT\Architectus\Simulation\LM4040_2P5.sub
+WINDOW 3 8 40 Top 2
+PIN -32 0 LEFT 8
+PINATTR PinName C
+PINATTR SpiceOrder 1
+PIN 48 -16 RIGHT 8
+PINATTR PinName A
+PINATTR SpiceOrder 2
+PIN 48 16 RIGHT 8
+PINATTR PinName NA
+PINATTR SpiceOrder 3

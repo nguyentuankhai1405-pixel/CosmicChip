@@ -1,0 +1,58 @@
+LTspice 24.1.5 for Windows
+Circuit: C:\Users\Truong_Tuan_Vi\CosmicChip\OUR PROJECT\Architectus\Simulation\Test_Case_8_LineRegulation\TEST_CASE8_LINEREGULATION.net
+Start Time: Wed Nov 18 08:19:31 2026
+Options: cshunt=1e-15
+solver = Normal
+Maximum thread count: 16
+tnom = 27
+temp = 25
+method = trap
+Direct Newton iteration for .op point succeeded.
+.step vusb=4.5
+.step vusb=4.75
+.step vusb=5
+.step vusb=5.25
+.step vusb=5.5
+Total elapsed time: 31.631 seconds.
+
+Files loaded:
+C:\Users\Truong_Tuan_Vi\CosmicChip\OUR PROJECT\Architectus\Simulation\Test_Case_8_LineRegulation\TEST_CASE8_LINEREGULATION.net
+C:\Users\Truong_Tuan_Vi\AppData\Local\LTspice\lib\cmp\standard.dio
+C:\Users\Truong_Tuan_Vi\AppData\Local\LTspice\lib\cmp\standard.mos
+C:\Users\Truong_Tuan_Vi\CosmicChip\OUR PROJECT\Architectus\Simulation\LM4040_2P5.sub
+C:\Users\Truong_Tuan_Vi\CosmicChip\OUR PROJECT\Architectus\Simulation\MAX5026.sub
+C:\Users\Truong_Tuan_Vi\CosmicChip\OUR PROJECT\Architectus\Simulation\SiPM_60035.sub
+C:\Users\Truong_Tuan_Vi\CosmicChip\OUR PROJECT\Architectus\Simulation\TPH2502.sub
+
+
+Measurement: hv_avg
+  step	AVG(V(HV))	FROM	TO
+     1	28.0620360087	0	2.5e-05
+     2	28.064432688	0	2.5e-05
+     3	28.0666094505	0	2.5e-05
+     4	28.069313013	0	2.5e-05
+     5	28.0686510287	0	2.5e-05
+
+Measurement: vref_avg
+  step	AVG(V(VREF))	FROM	TO
+     1	2.50126838684	0	2.5e-05
+     2	2.50142766556	0	2.5e-05
+     3	2.50158716086	0	2.5e-05
+     4	2.50174666031	0	2.5e-05
+     5	2.50190616029	0	2.5e-05
+
+Measurement: adc_sample
+  step	MAX(V(ADC_SIGNAL))	FROM	TO
+     1	0.0878529325128	0	2.5e-05
+     2	0.0881422162056	0	2.5e-05
+     3	0.088347941637	0	2.5e-05
+     4	0.0884701162577	0	2.5e-05
+     5	0.08854303509	0	2.5e-05
+
+Measurement: trig_pk
+  step	MAX(V(TRIGGER))	FROM	TO
+     1	4.45728397369	0	2.5e-05
+     2	4.64484786987	0	2.5e-05
+     3	4.76630210876	0	2.5e-05
+     4	4.8416686058	0	2.5e-05
+     5	4.8622341156	0	2.5e-05

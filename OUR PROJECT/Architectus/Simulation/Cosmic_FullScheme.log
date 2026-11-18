@@ -1,0 +1,22 @@
+LTspice 24.1.5 for Windows
+Circuit: C:\Users\Truong_Tuan_Vi\CosmicChip\OUR PROJECT\Architectus\Simulation\Cosmic_FullScheme.net
+Start Time: Wed Nov 18 07:55:32 2026
+Options: cshunt=1e-15
+solver = Normal
+Maximum thread count: 16
+tnom = 27
+temp = 27
+method = trap
+Direct Newton iteration for .op point succeeded.
+Changing Tseed to 2.50977e-10
+Total elapsed time: 6.767 seconds.
+
+Files loaded:
+C:\Users\Truong_Tuan_Vi\CosmicChip\OUR PROJECT\Architectus\Simulation\Cosmic_FullScheme.net
+C:\Users\Truong_Tuan_Vi\AppData\Local\LTspice\lib\cmp\standard.dio
+C:\Users\Truong_Tuan_Vi\AppData\Local\LTspice\lib\cmp\standard.mos
+C:\Users\Truong_Tuan_Vi\CosmicChip\OUR PROJECT\Architectus\Simulation\SiPM_60035.sub
+C:\Users\Truong_Tuan_Vi\CosmicChip\OUR PROJECT\Architectus\Simulation\TPH2502.sub
+C:\Users\Truong_Tuan_Vi\CosmicChip\OUR PROJECT\Architectus\Simulation\LM4040_2P5.sub
+C:\Users\Truong_Tuan_Vi\CosmicChip\OUR PROJECT\Architectus\Simulation\MAX5026.sub
+
