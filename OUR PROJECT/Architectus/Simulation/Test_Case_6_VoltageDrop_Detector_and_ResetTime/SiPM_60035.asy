@@ -1,0 +1,20 @@
+Version 4
+SymbolType BLOCK
+RECTANGLE Normal -112 -40 112 40
+WINDOW 0 0 -40 Bottom 2
+WINDOW 3 0 40 Top 2
+SYMATTR Prefix X
+SYMATTR Value SiPM_60035
+SYMATTR ModelFile C:\Users\Truong_Tuan_Vi\CosmicChip\OUR PROJECT\Architectus\Simulation\SiPM_60035.sub
+PIN -112 -16 LEFT 8
+PINATTR PinName ANODE
+PINATTR SpiceOrder 1
+PIN -112 16 LEFT 8
+PINATTR PinName NC
+PINATTR SpiceOrder 2
+PIN 112 -16 RIGHT 8
+PINATTR PinName CATHODE
+PINATTR SpiceOrder 3
+PIN 112 16 RIGHT 8
+PINATTR PinName GND
+PINATTR SpiceOrder 4

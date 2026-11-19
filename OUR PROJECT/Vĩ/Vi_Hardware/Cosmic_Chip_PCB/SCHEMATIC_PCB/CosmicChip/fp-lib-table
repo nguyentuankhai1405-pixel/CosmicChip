@@ -1,0 +1,4 @@
+(fp_lib_table
+	(version 7)
+	(lib (name "Myfootprint") (type "KiCad") (uri "C:/Users/Truong_Tuan_Vi/Documents/HOME_PROJECT/COSMIC_CHIP_MUON_DETECTOR/Vi_Hardware/Cosmic_Chip_PCB/SCHEMATIC_PCB/My_footprint/Myfootprint.pretty") (options "") (descr ""))
+)
